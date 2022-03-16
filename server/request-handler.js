@@ -11,7 +11,10 @@ this file and include it in basic-server.js so that it actually works.
 *Hint* Check out the node module documentation at http://nodejs.org/api/modules.html.
 
 **************************************************************/
+const urlModule = require('url');
+
 var defaultCorsHeaders; //declair here because eslint says format error
+var data = [];
 
 var requestHandler = function(request, response) {
   // Request and Response come from node's http module.
@@ -44,7 +47,29 @@ var requestHandler = function(request, response) {
 
   // .writeHead() writes to the request line and headers of the response,
   // which includes the status and all headers.
-  response.writeHead(statusCode, headers);
+  // response.writeHead(statusCode, headers); //???
+
+  //MY CODE HERE:
+  var url = urlModule.parse(request.url).pathname;
+  if (url === '/classes/messages') {
+    if (request.method === 'GET') {
+      response.writeHead(statusCode, headers);
+      // console.log(JSON.stringify(data)) //not showing
+      response.end(JSON.stringify(data));
+    } else if (request.method === 'POST') {
+      response.writeHead(201, headers);
+      request.on('data', (chunk) =>
+        data.push(JSON.parse(chunk))); //why?
+      // request.on('end', data);  //well...
+      response.end(JSON.stringify(data));
+    }
+
+  } else {
+    response.statusCode = 404;
+    response.writeHead(response.statusCode, headers);
+    response.end();
+  }
+
 
   // Make sure to always call response.end() - Node may not send
   // anything back to the client until you do. The string you pass to
@@ -53,7 +78,7 @@ var requestHandler = function(request, response) {
   //
   // Calling .end "flushes" the response's internal buffer, forcing
   // node to actually send all the data over to the client.
-  response.end('Hello, World!');
+  // response.end('Hello, World!');
 };
 
 // These headers will allow Cross-Origin Resource Sharing (CORS).
